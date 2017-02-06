@@ -8,11 +8,11 @@ Due Feb. 15, 2017
 
 Part 1
 Robot Properties in RViz
--
--
--
--
--
+- Base Link
+- Head Camera Link
+- Elbows Link
+- Gripper Link
+- Bellows Link
 
 Part 2
 Least number of navigation goals for 90% environment build:
