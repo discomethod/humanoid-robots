@@ -58,3 +58,5 @@ install(
   DIRECTORY config include launch robots worlds models
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+
+add_definitions(-std=c++11)
