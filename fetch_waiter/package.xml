@@ -1,0 +1,20 @@
+<package>
+  <name>fetch_waiter</name>
+  <version>0.7.1</version>
+  <description>
+    Fetch waiter
+  </description>
+  <author>Calvin Li</author>
+  <maintainer email="calvinli723@gmail.com">Calvin Li</maintainer>
+  <license>BSD</license>
+  
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>actionlib</run_depend>
+  <run_depend>fetch_gazebo</run_depend>
+  <run_depend>fetch_moveit_config</run_depend>
+  <run_depend>fetch_navigation</run_depend>
+  <run_depend>moveit_python</run_depend>
+  <run_depend>simple_grasping</run_depend>
+  <run_depend>teleop_twist_keyboard</run_depend>
+</package>
