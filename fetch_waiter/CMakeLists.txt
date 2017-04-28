@@ -6,7 +6,7 @@ catkin_package()
 
 install(
   PROGRAMS
-    scripts/demo.py
+    scripts/waiter.py
     scripts/pick_place_demo.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
