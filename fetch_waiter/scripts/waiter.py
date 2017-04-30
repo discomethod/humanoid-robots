@@ -213,6 +213,28 @@ class GraspingClient(object):
             if result.error_code.val == MoveItErrorCodes.SUCCESS:
                 return
 
+class Table(object):
+    def __init__(self):
+        self.width = 0.913
+        self.length = 0.913
+        self.center = (4.05, 3)
+        self.corners = []
+        x = self.center[0] + self.width / 2.0
+        y = self.center[0] + self.length / 2.0
+        self.corners.append((x, y))
+        x = self.center[0] + self.width / 2.0
+        y = self.center[0] - self.length / 2.0
+        self.corners.append((x, y))
+        x = self.center[0] - self.width / 2.0
+        y = self.center[0] + self.length / 2.0
+        self.corners.append((x, y))
+        x = self.center[0] - self.width / 2.0
+        y = self.center[0] - self.length / 2.0
+        self.corners.append((x, y))
+        x = self.center[0] + self.width / 2.0
+        y = self.center[0] - self.length / 2.0
+        self.corners.append((x, y))
+
 if __name__ == "__main__":
     # Create a node
     rospy.init_node("waiter")
@@ -230,9 +252,10 @@ if __name__ == "__main__":
     # Move the base to be in front of the table
     # Demonstrates the use of the navigation stack
     rospy.loginfo("Moving to table...")
-
-    move_base.goto(2.250, 3.118, 0.0)
-    move_base.goto(2.750, 3.118, 0.0)
+    move_base.goto(5.05, 3, 0.0)
+    rospy.loginfo("Here now")
+    #move_base.goto(2.250, 3.118, 0.0)
+    #move_base.goto(2.750, 3.118, 0.0)
 
     ## Raise the torso using just a controller
     #rospy.loginfo("Raising torso...")
