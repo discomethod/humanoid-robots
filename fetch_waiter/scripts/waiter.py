@@ -27,6 +27,7 @@ class MoveBaseClient(object):
         self.client.wait_for_server()
 
     def goto(self, x, y, theta, frame="map"):
+        rospy.loginfo('Moving base to (%f, %f, %f)' % (x, y, theta))
         move_goal = MoveBaseGoal()
         move_goal.target_pose.pose.position.x = x
         move_goal.target_pose.pose.position.y = y
@@ -215,24 +216,21 @@ class GraspingClient(object):
 
 class Table(object):
     def __init__(self):
-        self.width = 0.913
-        self.length = 0.913
+        self.width = 0.913 + 0.8
+        self.length = 0.913 + 0.8
         self.center = (4.05, 3)
         self.corners = []
         x = self.center[0] + self.width / 2.0
-        y = self.center[0] + self.length / 2.0
+        y = self.center[1] + self.length / 2.0
         self.corners.append((x, y))
         x = self.center[0] + self.width / 2.0
-        y = self.center[0] - self.length / 2.0
+        y = self.center[1] - self.length / 2.0
         self.corners.append((x, y))
         x = self.center[0] - self.width / 2.0
-        y = self.center[0] + self.length / 2.0
+        y = self.center[1] - self.length / 2.0
         self.corners.append((x, y))
         x = self.center[0] - self.width / 2.0
-        y = self.center[0] - self.length / 2.0
-        self.corners.append((x, y))
-        x = self.center[0] + self.width / 2.0
-        y = self.center[0] - self.length / 2.0
+        y = self.center[1] + self.length / 2.0
         self.corners.append((x, y))
 
 if __name__ == "__main__":
@@ -251,8 +249,14 @@ if __name__ == "__main__":
 
     # Move the base to be in front of the table
     # Demonstrates the use of the navigation stack
+    table = Table()
     rospy.loginfo("Moving to table...")
-    move_base.goto(5.05, 3, 0.0)
+    move_base.goto(table.corners[0][0], table.corners[0][1], 0.0)
+    move_base.goto(table.corners[1][0], table.corners[1][1], 0.0)
+    move_base.goto(table.corners[2][0], table.corners[2][1], 0.0)
+    move_base.goto(table.corners[3][0], table.corners[3][1], 0.0)
+
+    #`move_base.goto(5.05, 3, 0.0)
     rospy.loginfo("Here now")
     #move_base.goto(2.250, 3.118, 0.0)
     #move_base.goto(2.750, 3.118, 0.0)
