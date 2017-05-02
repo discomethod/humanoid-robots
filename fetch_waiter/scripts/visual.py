@@ -274,7 +274,7 @@ class GraspingClient(object):
 
 if __name__ == "__main__":
     # Create a node
-    rospy.init_node("pick_place_demo")
+    rospy.init_node("visual")
 
     # Make sure sim time is working
     while not rospy.Time.now():

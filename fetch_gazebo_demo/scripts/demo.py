@@ -27,7 +27,6 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Author: Michael Ferguson
-# Author: Di Sun
 
 import copy
 import actionlib
@@ -46,6 +45,8 @@ from geometry_msgs.msg import PoseStamped
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from moveit_msgs.msg import PlaceLocation, MoveItErrorCodes
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+
+import timeit
 
 # Move base using navigation stack
 class MoveBaseClient(object):
@@ -143,7 +144,6 @@ class GraspingClient(object):
         self.scene.waitForSync()
 
         # insert objects to scene
-        objects = list()
         idx = -1
         for obj in find_result.objects:
             idx += 1
@@ -152,8 +152,6 @@ class GraspingClient(object):
                                          obj.object.primitives[0],
                                          obj.object.primitive_poses[0],
                                          wait = False)
-            if obj.object.primitive_poses[0].position.x < 0.85:
-                objects.append([obj, obj.object.primitive_poses[0].position.z])
 
         for obj in find_result.support_surfaces:
             # extend surface to floor, and make wider since we have narrow field of view
@@ -172,35 +170,26 @@ class GraspingClient(object):
         self.scene.waitForSync()
 
         # store for grasping
-        #self.objects = find_result.objects
+        self.objects = find_result.objects
         self.surfaces = find_result.support_surfaces
 
-        # store graspable objects by Z
-        objects.sort(key=lambda object: object[1])
-        objects.reverse()
-        self.objects = [object[0] for object in objects]
-        #for object in objects:
-        #    print(object[0].object.name, object[1])
-        #exit(-1)
-
-    def getGraspableObject(self):
+    def getGraspableCube(self):
         graspable = None
         for obj in self.objects:
             # need grasps
             if len(obj.grasps) < 1:
                 continue
             # check size
-            if obj.object.primitives[0].dimensions[0] < 0.03 or \
-               obj.object.primitives[0].dimensions[0] > 0.25 or \
-               obj.object.primitives[0].dimensions[0] < 0.03 or \
-               obj.object.primitives[0].dimensions[0] > 0.25 or \
-               obj.object.primitives[0].dimensions[0] < 0.03 or \
-               obj.object.primitives[0].dimensions[0] > 0.25:
+            if obj.object.primitives[0].dimensions[0] < 0.05 or \
+               obj.object.primitives[0].dimensions[0] > 0.07 or \
+               obj.object.primitives[0].dimensions[0] < 0.05 or \
+               obj.object.primitives[0].dimensions[0] > 0.07 or \
+               obj.object.primitives[0].dimensions[0] < 0.05 or \
+               obj.object.primitives[0].dimensions[0] > 0.07:
                 continue
             # has to be on table
             if obj.object.primitive_poses[0].position.z < 0.5:
                 continue
-            print obj.object.primitive_poses[0], obj.object.primitives[0]
             return obj.object, obj.grasps
         # nothing detected
         return None, None
@@ -254,27 +243,9 @@ class GraspingClient(object):
             if result.error_code.val == MoveItErrorCodes.SUCCESS:
                 return
 
-    def stow(self):
-        joints = ["shoulder_pan_joint", "shoulder_lift_joint", "upperarm_roll_joint",
-                  "elbow_flex_joint", "forearm_roll_joint", "wrist_flex_joint", "wrist_roll_joint"]
-        pose = [1.32, 0.7, 0.0, -2.0, 0.0, -0.57, 0.0]
-        while not rospy.is_shutdown():
-            result = self.move_group.moveToJointPosition(joints, pose, 0.02)
-            if result.error_code.val == MoveItErrorCodes.SUCCESS:
-                return
-
-    def intermediate_stow(self):
-        joints = ["shoulder_pan_joint", "shoulder_lift_joint", "upperarm_roll_joint",
-                  "elbow_flex_joint", "forearm_roll_joint", "wrist_flex_joint", "wrist_roll_joint"]
-        pose = [0.7, -0.3, 0.0, -0.3, 0.0, -0.57, 0.0]
-        while not rospy.is_shutdown():
-            result = self.move_group.moveToJointPosition(joints, pose, 0.02)
-            if result.error_code.val == MoveItErrorCodes.SUCCESS:
-                return
-
 if __name__ == "__main__":
     # Create a node
-    rospy.init_node("pick_place_demo")
+    rospy.init_node("demo")
 
     # Make sure sim time is working
     while not rospy.Time.now():
@@ -289,81 +260,61 @@ if __name__ == "__main__":
     # Move the base to be in front of the table
     # Demonstrates the use of the navigation stack
     rospy.loginfo("Moving to table...")
-    move_base.goto(2.250, 3.118, 0.0)
-    move_base.goto(2.750, 3.118, 0.0)
+    move_base.goto(2.250, 3.65, 0.0)
+    move_base.goto(2.750, 3.65, 0.0)
 
     # Raise the torso using just a controller
-    #rospy.loginfo("Raising torso...")
-    #torso_action.move_to([0.4, ])
+    rospy.loginfo("Raising torso...")
+    torso_action.move_to([0.4, ])
 
     # Point the head at the cube we want to pick
-    # head_action.look_at(3.7, 3.18, 0.0, "map")
-    #cube_in_grapper = False
-    #grasping_client.stow()
+    head_action.look_at(3.7, 3.18, 0.0, "map")
 
-    #while not rospy.is_shutdown():
-    #    head_action.look_at(1.2, 0.0, 0.0, "base_link")
+    # Get block to pick
+    start_time = timeit.default_timer()
+    while not rospy.is_shutdown():
+        rospy.loginfo("Picking object...")
+        grasping_client.updateScene()
+        cube, grasps = grasping_client.getGraspableCube()
+        if cube == None:
+            rospy.logwarn("Perception failed.")
+            continue
 
-    #    # Get block to pick
-    #    fail_ct = 0
-    #    while not rospy.is_shutdown() and not cube_in_grapper:
-    #        rospy.loginfo("Picking object...")
-    #        grasping_client.updateScene()
-    #        cube, grasps = grasping_client.getGraspableObject()
-    #        if cube == None:
-    #            rospy.logwarn("Perception failed.")
-    #            # grasping_client.intermediate_stow()
-    #            grasping_client.stow()
-    #            head_action.look_at(1.2, 0.0, 0.0, "base_link")
-    #            continue
+        # Pick the block
+        if grasping_client.pick(cube, grasps):
+            break
+        rospy.logwarn("Grasping failed.")
+    elapsed = timeit.default_timer() - start_time
+    rospy.loginfo("Grasp Time:")
+    rospy.loginfo(elapsed)
 
-    #        # Pick the block
-    #        if grasping_client.pick(cube, grasps):
-    #            cube_in_grapper = True
-    #            break
-    #        rospy.logwarn("Grasping failed.")
-    #        grasping_client.stow()
-    #        if fail_ct > 15:
-    #            fail_ct = 0
-    #            break
-    #        fail_ct += 1
+    # Tuck the arm
+    grasping_client.tuck()
 
-    #    # Tuck the arm
-    #    #grasping_client.tuck()
+    # Lower torso
+    rospy.loginfo("Lowering torso...")
+    torso_action.move_to([0.0, ])
 
-    #    # Lower torso
-    #    #rospy.loginfo("Lowering torso...")
-    #    #torso_action.move_to([0.0, ])
+    # Move to second table
+    rospy.loginfo("Moving to second table...")
+    move_base.goto(-3.53, 3.75, 1.57)
+    move_base.goto(-3.53, 4.15, 1.57)
 
-    #    # Move to second table
-    #    #rospy.loginfo("Moving to second table...")
-    #    #move_base.goto(-3.53, 3.75, 1.57)
-    #    #move_base.goto(-3.53, 4.15, 1.57)
+    # Raise the torso using just a controller
+    rospy.loginfo("Raising torso...")
+    torso_action.move_to([0.4, ])
 
-    #    # Raise the torso using just a controller
-    #    #rospy.loginfo("Raising torso...")
-    #    #torso_action.move_to([0.4, ])
+    # Place the block
+    while not rospy.is_shutdown():
+        rospy.loginfo("Placing object...")
+        pose = PoseStamped()
+        pose.pose = cube.primitive_poses[0]
+        pose.pose.position.z += 0.05
+        pose.header.frame_id = cube.header.frame_id
+        if grasping_client.place(cube, pose):
+            break
+        rospy.logwarn("Placing failed.")
 
-    #    # Place the block
-    #    while not rospy.is_shutdown() and cube_in_grapper:
-    #        rospy.loginfo("Placing object...")
-    #        pose = PoseStamped()
-    #        pose.pose = cube.primitive_poses[0]
-    #        pose.pose.position.y *= -1.0
-    #        pose.pose.position.z += 0.02
-    #        pose.header.frame_id = cube.header.frame_id
-    #        if grasping_client.place(cube, pose):
-    #            cube_in_grapper = False
-    #            break
-    #        rospy.logwarn("Placing failed.")
-    #        grasping_client.intermediate_stow()
-    #        grasping_client.stow()
-    #        if fail_ct > 15:
-    #            fail_ct = 0
-    #            break
-    #        fail_ct += 1
-    #    # Tuck the arm, lower the torso
-    #    grasping_client.intermediate_stow()
-    #    grasping_client.stow()
-    #    rospy.loginfo("Finished")
-    #    #torso_action.move_to([0.0, ])
+    # Tuck the arm, lower the torso
+    grasping_client.tuck()
+    torso_action.move_to([0.0, ])
