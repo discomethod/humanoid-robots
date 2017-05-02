@@ -216,10 +216,11 @@ class GraspingClient(object):
 
 class Table(object):
     def __init__(self, x, y, width, length):
-        self.width = width + 0.95
-        self.length = length + 0.95
+        self.width = width + 1.0
+        self.length = length + 1.0
         self.center = (x, y)
         self.corners = []
+        self.edge_centers = []
         x = self.center[0] + self.width / 2.0
         y = self.center[1] + self.length / 2.0
         self.corners.append((x, y))
@@ -249,7 +250,7 @@ if __name__ == "__main__":
 
     # Move the base to be in front of the table
     # Demonstrates the use of the navigation stack
-    table = Table(4.05, 3, 0.913, 0.913)
+    table = Table(4.05, 3, 0.913, 5)
     rospy.loginfo("Moving to table...")
     #move_base.goto(1.5,2,0)
     move_base.goto(table.corners[0][0], table.corners[0][1], 0.0)
