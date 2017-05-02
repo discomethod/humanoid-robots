@@ -29,7 +29,7 @@ class MoveBaseClient(object):
     def goto(self, x, y, theta, frame="map"):
         rospy.loginfo('Moving base to (%f, %f, %f)' % (x, y, theta))
         move_goal = MoveBaseGoal()
-        move_goal.target_pose.pose.position.x = x
+        move_goal.target_pose.pose.position.x = x-0.5
         move_goal.target_pose.pose.position.y = y
         move_goal.target_pose.pose.orientation.z = sin(theta/2.0)
         move_goal.target_pose.pose.orientation.w = cos(theta/2.0)
@@ -216,9 +216,9 @@ class GraspingClient(object):
 
 class Table(object):
     def __init__(self, x, y, width, length):
-        self.width = width + 0.9
-        self.length = length + 0.9
-        self.center = (x-0.41, y-0.22)
+        self.width = width + 0.95
+        self.length = length + 0.95
+        self.center = (x, y)
         self.corners = []
         x = self.center[0] + self.width / 2.0
         y = self.center[1] + self.length / 2.0
@@ -251,6 +251,7 @@ if __name__ == "__main__":
     # Demonstrates the use of the navigation stack
     table = Table(4.05, 3, 0.913, 0.913)
     rospy.loginfo("Moving to table...")
+    #move_base.goto(1.5,2,0)
     move_base.goto(table.corners[0][0], table.corners[0][1], 0.0)
     move_base.goto(table.corners[1][0], table.corners[1][1], 0.0)
     move_base.goto(table.corners[2][0], table.corners[2][1], 0.0)
