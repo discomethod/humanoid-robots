@@ -242,12 +242,6 @@ class Table(object):
 class WaiterClient():
 
     def __init__(self, move_base, table, start_point, distance_vector_file=None):
-        #with open(distance_vector_file, "r") as fin:
-        #    # read in the distance vectors and distance costs
-        #    for line in fin:
-        #        parse = [float(x) for x in line.split(",")]
-        #        distance_vectors.append(np.array([parse[0],parse[1]]))
-        #        distance_costs.append(parse[2])
 
         self.move_base = move_base
         self.position = start_point
@@ -257,6 +251,20 @@ class WaiterClient():
         #self.table_as = [self.top_left, self.top_left, self.bottom_right, self.bottom_right]
         self.distance_vectors = list()
         self.distance_costs = list()
+
+        try:
+            with open(distance_vector_file, "r") as fin:
+                # read in the distance vectors and distance costs
+                for line in fin:
+                    parse = [float(x) for x in line.split(",")]
+                    self.distance_vectors.append(np.array([parse[0],parse[1]]))
+                    self.distance_costs.append(parse[2])
+        except TypeError:
+            rospy.logwarn("Distance vector file not provided, aborting.")
+            exit()
+        except IOError:
+            rospy.logwarn("Distance vector file not found, aborting.")
+            exit()
 
         #xn = np.array([1,0])
         #yn = np.array([0,1])
