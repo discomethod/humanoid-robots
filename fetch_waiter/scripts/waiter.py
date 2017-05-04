@@ -288,6 +288,16 @@ class WaiterClient():
             return False
         return True
 
+    def get_best_candidate(self, robotx, roboty, blockx, blocky):
+        candidates = self.calculate_candidates(robotx, roboty, blockx, blocky)
+        best_cost = None
+        best_candidate = None
+        for candidate_tuple in candidates:
+            if best_cost is None or candidate_tuple[1] < best_cost:
+                best_candidate = candidate_tuple[0]
+                best_cost = candidate_tuple[1]
+        return best_candidate
+
     def calculate_candidates(self, robotx, roboty, blockx, blocky):
         candidates = list() # tuple of (coord, cost)
         #block = np.array([blockx, blocky])
