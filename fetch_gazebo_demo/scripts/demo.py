@@ -30,6 +30,7 @@
 
 import copy
 import actionlib
+import numpy as np
 import rospy
 
 from math import sin, cos
@@ -47,6 +48,156 @@ from moveit_msgs.msg import PlaceLocation, MoveItErrorCodes
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 import timeit
+
+# handle precomputed grasp vectors
+class WaiterClient():
+
+    distance_vectors = list()
+    distance_costs = list()
+    top_left = np.array([3.093500, 3.956500]) # hardcoded corners of the table
+    bottom_right = np.array([5.006500, 2.043500])
+    table_as = list()
+    table_ns = list()
+
+    def __init__(self, distance_vector_file):
+        with open(distance_vector_file, "r") as fin:
+            # read in the distance vectors and distance costs
+            for line in fin:
+                parse = [float(x) for x in line.split(",")]
+                distance_vectors.append(np.array([parse[0],parse[1]]))
+                distance_costs.append(parse[2])
+        self.table_as = [self.top_left, self.top_left, self.bottom_right, self.bottom_right]
+        xn = np.array([1,0])
+        yn = np.array([0,1])
+        self.table_ns = [xn, yn, xn, yn]
+
+    def get_regime(self, x, y):
+        # calculate which regime the coordinates (x,y) are in
+        # assumes the coordinates are in a valid regime
+        """
+                  1
+            -------------
+            |           |
+          0 |           | 2
+            |           |
+            -------------
+                  3  
+        """
+        if x < self.top_left[0]:
+            return 0
+        if y > self.top_left[1]:
+            return 1
+        if x < self.bottom_right[0]:
+            return 2
+        return 3
+
+    def in_table(self, x, y):
+        # returns True if the coordinates are inside the table
+        if x > self.bottom_right[0] or x < self.top_left[0] or y > self.top_left[1] or y < self.bottom_right[1]:
+            return False
+        return True
+
+    def calculate_candidates(self, robotx, roboty, blockx, blocky):
+        candidates = list() # tuple of (coord, cost)
+        block = np.array([blockx, blocky])
+        """
+        # generated the intersections of distance vectors from the block and distance vectors
+        for table_a in self.table_as:
+            for table_n in self.table_ns:
+                for distance_vector in self.distance_vectors:
+                    # iterate through the distance vectors
+                    distance_mag = np.dot(distance_vector, distance_vector)
+                    vector_to_line = table_a - block - np.dot((table_a - block),table_n) * table_n
+                    distance_to_line = np.dot(vector_to_line, vector_to_line)
+                    if distance_to_line > distance_mag:
+                        continue
+                    b = table_a - block
+                    t_solves = np.roots([np.bot(b,b)-distance_mag,2*np.dot(b,table_n),1])
+                    for t_solve in t_solves:
+                        if t<0: pass
+                        if t>1: pass
+        """
+        for index in range(len(self.distance_vectors)):
+            distance_vector = self.distance_vectors[index]
+            perp = distance_vector[0]
+            trans = distance_vector[1]
+            if robotx < self.top_left[0]:
+                # regime 0
+                #if not self.in_table(blockx-perp, blocky+trans):
+                    #candidates.append((np.array([blockx-perp,blocky+trans]),self.distance_costs[index]))
+                if not self.in_table(blockx-perp, blocky-trans):
+                    candidates.append((np.array([blockx-perp,blocky-trans]),self.distance_costs[index]))
+            else if roboty > self.top_left[1]:
+                # regime 1
+                #if not self.in_table(blockx+trans, blocky-perp):
+                    #candidates.append((np.array([blockx+trans,blocky-perp]),self.distance_costs[index]))
+                if not self.in_table(blockx-trans, blocky-perp):
+                    candidates.append((np.array([blockx-trans,blocky-perp]),self.distance_costs[index]))
+            else if robotx < self.bottom_right[0]:
+                # regime 2
+                if not self.in_table(blockx+perp, blocky+trans):
+                    candidates.append((np.array([blockx+perp,blocky+trans]),self.distance_costs[index]))
+                #if not self.in_table(blockx+perp, blocky-trans):
+                    #candidates.append((np.array([blockx+perp,blocky-trans]),self.distance_costs[index]))
+            else:
+                # regime 3
+                if not self.in_table(blockx+trans, blocky+perp):
+                    candidates.append((np.array([blockx+trans,blocky+perp]),self.distance_costs[index]))
+                #if not self.in_table(blockx-trans, blocky+perp):
+                    #candidates.append((np.array([blockx-trans,blocky+perp]),self.distance_costs[index]))
+        return candidates
+
+    def delivery_route(self, fromx, fromy, tox, toy):
+        # returns a list of navigation goals to move from from to to
+        if fromx < self.top_left[0] and tox < self.top_left[0]:
+            # both on left side of the table
+            delivery_points.append(np.array([tox, toy]))
+            return delivery_points
+        if fromx > self.bottom_right[0] and tox > self.bottom_right[0]:
+            # both on right side of the table
+            delivery_points.append(np.array([tox, toy]))
+            return delivery_points
+        if fromy < self.bottom_right[1] and toy < self.bottom_right[1]:
+            # both on bottom side of the table
+            delivery_points.append(np.array([tox, toy]))
+            return delivery_points
+        if fromy > self.top_left[1] and toy > self.top_left[1]:
+            # both on bop side of the table
+            delivery_points.append(np.array([tox, toy]))
+            return delivery_points
+        from_regime = self.get_regime(fromx, fromy)
+        to_regime = self.get_regime(tox, toy)
+        midx = (self.top_left[0] + self.bottom_right[0])/2.0
+        midy = (self.top_left[1] + self.bottom_right[1])/2.0
+        if from_regime%2==0:
+            # at left or right side
+            if self.top_left[1]+self.bottom_right[1] > fromy+toy:
+                # use the bottom of the table
+                delivery_points.append(np.array([fromx, self.bottom_right[1]]))
+                delivery_points.append(np.array([midx, self.bottom_right[1]]))
+                delivery_points.append(np.array([2*midx-fromx, self.bottom_right[1]]))
+            else:
+                # use the top of the table
+                delivery_points.append(np.array([fromx, self.top_left[1]]))
+                delivery_points.append(np.array([midx, self.top_left[1]]))
+                delivery_points.append(np.array([2*midx-fromx, self.top_left[1]]))
+        else:
+            # at top or bottom
+            if self.top_left[0]+self.bottom_right[0] > fromx+tox:
+                # use the left side of the table
+                delivery_points.append(np.array([self.top_left[0],fromy]))
+                delivery_points.append(np.array([self.top_left[0],midy]))
+                delivery_points.append(np.array([self.top_left[0],2*midy-fromy]))
+            else:
+                # use the right side of the table
+                delivery_points.append(np.array([self.bottom_right[0],fromy]))
+                delivery_points.append(np.array([self.bottom_right[0],midy]))
+                delivery_points.append(np.array([self.bottom_right[0],2*midy-fromy]))
+        if (from_regime+to_regime)%2 == 1:
+            # adjacent sides
+            del delivery_points[-1] # pop the last corner command
+        delivery_points.append(np.array([tox, toy]))
+        return delivery_points
 
 # Move base using navigation stack
 class MoveBaseClient(object):
@@ -256,6 +407,7 @@ if __name__ == "__main__":
     torso_action = FollowTrajectoryClient("torso_controller", ["torso_lift_joint"])
     head_action = PointHeadClient()
     grasping_client = GraspingClient()
+    waiter_client = WaiterClient("vectors.txt")
 
     # Move the base to be in front of the table
     # Demonstrates the use of the navigation stack

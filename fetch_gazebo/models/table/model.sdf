@@ -7,7 +7,7 @@
         <pose>0 0 0.3775 0 0 0</pose>
         <geometry>
           <box>
-            <size>5 0.913 0.755</size>
+            <size>2 0.913 0.755</size>
           </box>
         </geometry>
       </collision>
@@ -15,7 +15,7 @@
         <pose>0 0 0.3775 0 0 0</pose>
         <geometry>
           <box>
-            <size>5 0.913 0.755</size>
+            <size>2 0.913 0.755</size>
           </box>
         </geometry>
       </visual>
