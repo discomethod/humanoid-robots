@@ -368,7 +368,6 @@ class WaiterClient():
             #delivery_points.append(np.array([tox, toy]))
             return [ np.array([tox, toy]), ]
         delivery_points = []
-        delivery_points.pop()
         from_regime = self.get_regime(fromx, fromy)
         to_regime = self.get_regime(tox, toy)
         midx = (self.top_left[0] + self.bottom_right[0])/2.0
@@ -417,6 +416,7 @@ class WaiterClient():
         points = self.delivery_route(self.position[0], self.position[1], dest[0], dest[1])
         for point in points:
             self.move_base.goto(point[0], point[1], 0.0)
+        self.position = dest
 
 if __name__ == "__main__":
     # Create a node
@@ -434,14 +434,14 @@ if __name__ == "__main__":
 
     # Move the base to be in front of the table
     # Demonstrates the use of the navigation stack
-    table = Table(4.05, 3, 0.913, 5)
+    table = Table(4.05, 3, 0.913, 2)
     rospy.loginfo("Moving to table...")
     #move_base.goto(1.5,2,0)
-    start_point = table.top_left
+    start_point = (5, 3)
 
     waiter_client = WaiterClient(move_base, table, start_point)
     move_base.goto(start_point[0], start_point[1], 0.0)
-    waiter_client.goto((5, 3))
+    waiter_client.goto((3, 3))
 
     #`move_base.goto(5.05, 3, 0.0)
     rospy.loginfo("Here now")
