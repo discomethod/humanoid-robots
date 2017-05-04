@@ -49,7 +49,7 @@ from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 import timeit
 
 # handle precomputed grasp vectors
-class PrecomputedGrasps():
+class WaiterClient():
 
     distance_vectors = list()
     distance_costs = list()
@@ -334,6 +334,7 @@ if __name__ == "__main__":
     torso_action = FollowTrajectoryClient("torso_controller", ["torso_lift_joint"])
     head_action = PointHeadClient()
     grasping_client = GraspingClient()
+    waiter_client = WaiterClient("vectors.txt")
 
     # Move the base to be in front of the table
     # Demonstrates the use of the navigation stack
