@@ -254,13 +254,13 @@ class WaiterClient():
         self.top_left = np.array([table.top_left[0], table.top_left[1]]) # hardcoded corners of the table
         self.bottom_right = np.array([table.bottom_right[0], table.bottom_right[1]])
 
-        self.table_as = [self.top_left, self.top_left, self.bottom_right, self.bottom_right]
+        #self.table_as = [self.top_left, self.top_left, self.bottom_right, self.bottom_right]
         self.distance_vectors = list()
         self.distance_costs = list()
 
-        xn = np.array([1,0])
-        yn = np.array([0,1])
-        self.table_ns = [xn, yn, xn, yn]
+        #xn = np.array([1,0])
+        #yn = np.array([0,1])
+        #self.table_ns = [xn, yn, xn, yn]
 
     def get_regime(self, x, y):
         # calculate which regime the coordinates (x,y) are in
@@ -290,7 +290,7 @@ class WaiterClient():
 
     def calculate_candidates(self, robotx, roboty, blockx, blocky):
         candidates = list() # tuple of (coord, cost)
-        block = np.array([blockx, blocky])
+        #block = np.array([blockx, blocky])
         """
         # generated the intersections of distance vectors from the block and distance vectors
         for table_a in self.table_as:
@@ -339,24 +339,26 @@ class WaiterClient():
         return candidates
 
     def delivery_route(self, fromx, fromy, tox, toy):
-        delivery_points = []
         # returns a list of navigation goals to move from from to to
+        #delivery_points.append(np.array([tox, toy]))
         if fromx < self.top_left[0] and tox < self.top_left[0]:
             # both on left side of the table
-            delivery_points.append(np.array([tox, toy]))
-            return delivery_points
+            #delivery_points.append(np.array([tox, toy]))
+            return [ np.array([tox, toy]), ]
         if fromx > self.bottom_right[0] and tox > self.bottom_right[0]:
             # both on right side of the table
-            delivery_points.append(np.array([tox, toy]))
-            return delivery_points
+            #delivery_points.append(np.array([tox, toy]))
+            return [ np.array([tox, toy]), ]
         if fromy < self.bottom_right[1] and toy < self.bottom_right[1]:
             # both on bottom side of the table
-            delivery_points.append(np.array([tox, toy]))
-            return delivery_points
+            #delivery_points.append(np.array([tox, toy]))
+            return [ np.array([tox, toy]), ]
         if fromy > self.top_left[1] and toy > self.top_left[1]:
             # both on bop side of the table
-            delivery_points.append(np.array([tox, toy]))
-            return delivery_points
+            #delivery_points.append(np.array([tox, toy]))
+            return [ np.array([tox, toy]), ]
+        delivery_points = []
+        delivery_points.pop()
         from_regime = self.get_regime(fromx, fromy)
         to_regime = self.get_regime(tox, toy)
         midx = (self.top_left[0] + self.bottom_right[0])/2.0
@@ -366,28 +368,38 @@ class WaiterClient():
             if self.top_left[1]+self.bottom_right[1] > fromy+toy:
                 # use the bottom of the table
                 delivery_points.append(np.array([fromx, self.bottom_right[1]]))
-                delivery_points.append(np.array([midx, self.bottom_right[1]]))
-                delivery_points.append(np.array([2*midx-fromx, self.bottom_right[1]]))
+                if abs(tox-fromx) > abs(midx-fromx):
+                    delivery_points.append(np.array([midx, self.bottom_right[1]]))
+                    if abs(tox-fromx) > abs(2*midx-2*fromx):
+                        delivery_points.append(np.array([2*midx-fromx, self.bottom_right[1]]))
             else:
                 # use the top of the table
                 delivery_points.append(np.array([fromx, self.top_left[1]]))
-                delivery_points.append(np.array([midx, self.top_left[1]]))
-                delivery_points.append(np.array([2*midx-fromx, self.top_left[1]]))
+                if abs(tox-fromx) > abs(midx-fromx):
+                    delivery_points.append(np.array([midx, self.top_left[1]]))
+                    if abs(tox-fromx) > abs(2*midx-2*fromx):
+                        delivery_points.append(np.array([2*midx-fromx, self.top_left[1]]))
         else:
             # at top or bottom
             if self.top_left[0]+self.bottom_right[0] > fromx+tox:
                 # use the left side of the table
                 delivery_points.append(np.array([self.top_left[0],fromy]))
-                delivery_points.append(np.array([self.top_left[0],midy]))
-                delivery_points.append(np.array([self.top_left[0],2*midy-fromy]))
+                if abs(toy-fromy) > abs(midy-fromy):
+                    delivery_points.append(np.array([self.top_left[0],midy]))
+                    if abs(toy-fromy) > abs(2*midy-2*fromy):
+                        delivery_points.append(np.array([self.top_left[0],2*midy-fromy]))
             else:
                 # use the right side of the table
                 delivery_points.append(np.array([self.bottom_right[0],fromy]))
-                delivery_points.append(np.array([self.bottom_right[0],midy]))
-                delivery_points.append(np.array([self.bottom_right[0],2*midy-fromy]))
+                if abs(toy-fromy) > abs(midy-fromy):
+                    delivery_points.append(np.array([self.bottom_right[0],midy]))
+                    if abs(toy-fromy) > abs(2*midy-2*fromy):
+                        delivery_points.append(np.array([self.bottom_right[0],2*midy-fromy]))
+        """
         if (from_regime+to_regime)%2 == 1:
             # adjacent sides
             del delivery_points[-1] # pop the last corner command
+        """
         delivery_points.append(np.array([tox, toy]))
         return delivery_points
 
