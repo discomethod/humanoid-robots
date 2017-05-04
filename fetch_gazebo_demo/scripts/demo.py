@@ -48,6 +48,84 @@ from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 import timeit
 
+# handle precomputed grasp vectors
+class PrecomputedGrasps():
+
+    distance_vectors = list()
+    distance_costs = list()
+    top_left = np.array([3.093500, 3.956500]) # hardcoded corners of the table
+    bottom_right = np.array([5.006500, 2.043500])
+    table_as = list()
+    table_ns = list()
+
+    def __init__(self, distance_vector_file):
+        with open(distance_vector_file, "r") as fin:
+            # read in the distance vectors and distance costs
+            for line in fin:
+                parse = [float(x) for x in line.split(",")]
+                distance_vectors.append(np.array([parse[0],parse[1]]))
+                distance_costs.append(parse[2])
+        self.table_as = [self.top_left, self.top_left, self.bottom_right, self.bottom_right]
+        xn = np.array([1,0])
+        yn = np.array([0,1])
+        self.table_ns = [xn, yn, xn, yn]
+
+    def in_table(self, x, y):
+        # returns True if the coordinates are inside the table
+        if x > self.bottom_right[0] or x < self.top_left[0] or y > self.top_left[1] or y < self.bottom_right[1]:
+            return False
+        return True
+
+    def calculate_candidates(self, robotx, roboty, blockx, blocky):
+        candidates = list() # tuple of (coord, cost)
+        block = np.array([blockx, blocky])
+        """
+        # generated the intersections of distance vectors from the block and distance vectors
+        for table_a in self.table_as:
+            for table_n in self.table_ns:
+                for distance_vector in self.distance_vectors:
+                    # iterate through the distance vectors
+                    distance_mag = np.dot(distance_vector, distance_vector)
+                    vector_to_line = table_a - block - np.dot((table_a - block),table_n) * table_n
+                    distance_to_line = np.dot(vector_to_line, vector_to_line)
+                    if distance_to_line > distance_mag:
+                        continue
+                    b = table_a - block
+                    t_solves = np.roots([np.bot(b,b)-distance_mag,2*np.dot(b,table_n),1])
+                    for t_solve in t_solves:
+                        if t<0: pass
+                        if t>1: pass
+        """
+        for index in range(len(self.distance_vectors)):
+            distance_vector = self.distance_vectors[index]
+            perp = distance_vector[0]
+            trans = distance_vector[1]
+            if robotx < self.top_left[0]:
+                # regime 0
+                #if not self.in_table(blockx-perp, blocky+trans):
+                    #candidates.append((np.array([blockx-perp,blocky+trans]),self.distance_costs[index]))
+                if not self.in_table(blockx-perp, blocky-trans):
+                    candidates.append((np.array([blockx-perp,blocky-trans]),self.distance_costs[index]))
+            else if roboty > self.top_left[1]:
+                # regime 1
+                #if not self.in_table(blockx+trans, blocky-perp):
+                    #candidates.append((np.array([blockx+trans,blocky-perp]),self.distance_costs[index]))
+                if not self.in_table(blockx-trans, blocky-perp):
+                    candidates.append((np.array([blockx-trans,blocky-perp]),self.distance_costs[index]))
+            else if robotx < self.bottom_right[0]:
+                # regime 2
+                if not self.in_table(blockx+perp, blocky+trans):
+                    candidates.append((np.array([blockx+perp,blocky+trans]),self.distance_costs[index]))
+                #if not self.in_table(blockx+perp, blocky-trans):
+                    #candidates.append((np.array([blockx+perp,blocky-trans]),self.distance_costs[index]))
+            else:
+                # regime 3
+                if not self.in_table(blockx+trans, blocky+perp):
+                    candidates.append((np.array([blockx+trans,blocky+perp]),self.distance_costs[index]))
+                #if not self.in_table(blockx-trans, blocky+perp):
+                    #candidates.append((np.array([blockx-trans,blocky+perp]),self.distance_costs[index]))
+        return candidates
+
 # Move base using navigation stack
 class MoveBaseClient(object):
 
