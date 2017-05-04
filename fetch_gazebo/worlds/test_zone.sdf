@@ -11,7 +11,7 @@
       <uri>model://test_zone</uri>
     </include>
     <include>
-      <uri>model://cafe_table</uri>
+      <uri>model://table</uri>
       <name>table1</name>
       <pose>4.05 3 0 0 0 1.57</pose>
     </include>

@@ -424,7 +424,7 @@ if __name__ == "__main__":
 
     # Move the base to be in front of the table
     # Demonstrates the use of the navigation stack
-    table = Table(4.05, 3, 0.913, 5)
+    table = Table(4.05, 3, 0.913, 2)
     rospy.loginfo("Moving to table...")
     #move_base.goto(1.5,2,0)
     start_point = (5, 3)
