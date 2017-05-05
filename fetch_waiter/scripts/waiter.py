@@ -447,33 +447,7 @@ if __name__ == "__main__":
     # Demonstrates the use of the navigation stack
     table = Table(4.05, 3, 1.1, 2.15)
     rospy.loginfo("Moving to table...")
-    #move_base.goto(1.5,2,0)
-    #start_point = (5, 3)
 
-    #waiter_client = WaiterClient(move_base, table, start_point)
-    #move_base.goto(start_point[0], start_point[1], 0.0)
-    #waiter_client.goto((3, 3))
-    ####option 1 comment block
-    '''
-    rospy.loginfo("Moving to table...")
-    move_base.goto(2.75, 4, 0.0)
-    move_base.goto(3.1, 4, 0.0)
-    curr = (3.1, 4, 0.0)
-
-    #`move_base.goto(5.05, 3, 0.0)
-    rospy.loginfo("Here now")
-    #move_base.goto(2.250, 3.118, 0.0)
-    #move_base.goto(2.750, 3.118, 0.0)
-
-    # Raise the torso using just a controller
-    rospy.loginfo("Raising torso...")
-    torso_action.move_to([0.4, ])
-
-    # Point the head at the cube we want to pick
-    head_action.look_at(3.7, 4, 0.0, "map")
-
-    #pos_list = [ [2.5, 5.5], [2.5, 4.5], [2.5, 3.5], [2.5, 2.5], [2.5, 1.5] ]
-    '''
     # option 2
     curr = [0,0]
     waiter_client = WaiterClient(move_base, table, curr, "vectors.txt")
@@ -501,43 +475,6 @@ if __name__ == "__main__":
             break
         rospy.logwarn("Grasping failed.")
 
-
-   
-    ## option 1 -- object detection + delivery
-    # Get block to pick
-    '''
-    pos = 0
-    perception_attempt = 0
-    grasp_attempt = 0
-    while not rospy.is_shutdown():
-        rospy.loginfo("Picking object...")
-        grasping_client.updateScene()
-        cube, grasps = grasping_client.getGraspableCube()
-
-        if (cube == None) & (perception_attempt < 3):
-            rospy.logwarn("Perception failed.")
-            perception_attempt += 1
-            continue
-        elif (cube == None) & (pos < 1):
-            pos += 1
-            rospy.loginfo("moving to next position")
-            perception_attept = 0
-            #move_base.goto(2.75, 3, 0.0)
-            rospy.loginfo("move forwrad")
-            move_base.goto(3.1, 3, 0.0)
-            curr = (3.1, 3, 0.0)
-            head_action.look_at(3.7, 3, 0.0, "map")
-            continue
-
-        # Pick the block
-        #start_time = timeit.default_timer()
-        if grasping_client.pick(cube, grasps) & (grasp_attempt < 2):
-            #move_base.goto(pos_list[pos+1][0], pos_list[pos+1][1])\
-            grasp_attempt += 1
-            break
-
-        rospy.logwarn("Grasping failed.")
-    '''
     # Tuck the arm
     grasping_client.tuck()
 
@@ -547,22 +484,6 @@ if __name__ == "__main__":
     '''
     goal = [5,3]
     waiter_client.goto((5, 3))
-
-    #move_base.goto(5.35, 2, 3.14)
-
-    ## Lower torso
-    #rospy.loginfo("Lowering torso...")
-    #torso_action.move_to([0.0, ])
-
-    ## Move to second table
-    #rospy.loginfo("Moving to second table...")
-    #move_base.goto(-3.53, 3.75, 1.57)
-    #move_base.goto(-3.53, 4.15, 1.57)
-
-    ## Raise the torso using just a controller
-    #rospy.loginfo("Raising torso...")
-    #torso_action.move_to([0.4, ])
-
 
     move_base.goto(goal[0],goal[1],3.1415)
     # Place the block
