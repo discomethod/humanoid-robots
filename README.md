@@ -1,5 +1,7 @@
 # Team 4 Humanoid Robotics Project
 
+This repo was forked from the HumanoidRobotics/fetch_gazebo repository
+
 Task 1:
 Use vision system to detect object, moving robot along the table until the object is detected, then grasp the object and move around the table in order to deliver to the customer.
 
