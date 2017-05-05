@@ -127,13 +127,13 @@ class WaiterClient():
                     #candidates.append((np.array([blockx-perp,blocky+trans]),self.distance_costs[index]))
                 if not self.in_table(blockx-perp, blocky-trans):
                     candidates.append((np.array([blockx-perp,blocky-trans]),self.distance_costs[index]))
-            else if roboty > self.top_left[1]:
+            elif roboty > self.top_left[1]:
                 # regime 1
                 #if not self.in_table(blockx+trans, blocky-perp):
                     #candidates.append((np.array([blockx+trans,blocky-perp]),self.distance_costs[index]))
                 if not self.in_table(blockx-trans, blocky-perp):
                     candidates.append((np.array([blockx-trans,blocky-perp]),self.distance_costs[index]))
-            else if robotx < self.bottom_right[0]:
+            elif robotx < self.bottom_right[0]:
                 # regime 2
                 if not self.in_table(blockx+perp, blocky+trans):
                     candidates.append((np.array([blockx+perp,blocky+trans]),self.distance_costs[index]))
@@ -446,6 +446,7 @@ if __name__ == "__main__":
             move_base.goto(3, 4.5, 0.0)
             head_action.look_at(3.7, 4.0, 0.0, "map")
             continue
+        '''
         elif (cube == None) & (pos < 2):
             pos += 1
             rospy.loginfo("moving to next position")
@@ -473,7 +474,7 @@ if __name__ == "__main__":
             move_base.goto(3, 1.5, 0.0)
             head_action.look_at(3.7, 1.0, 0.0, "map")
             continue
-
+        '''
         # Pick the block
         #start_time = timeit.default_timer()
         if grasping_client.pick(cube, grasps):
