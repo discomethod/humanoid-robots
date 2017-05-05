@@ -1,7 +1,16 @@
-# Fetch Gazebo
+# Team 4 Humanoid Robotics Project
 
-This repository contains the Gazebo simulation for Fetch Robotics Fetch and
-Freight Research Edition Robots.
+Task 1:
+Use vision system to detect object, moving robot along the table until the object is detected, then grasp the object and move around the table in order to deliver to the customer.
 
- * Devel Job Status: [![Build Status](http://build.ros.org/buildStatus/icon?job=Idev__fetch_gazebo__ubuntu_trusty_amd64)](http://build.ros.org/view/Idev/job/Idev__fetch_gazebo__ubuntu_trusty_amd64/)
- * AMD64 Debian Job Status: [![Build Status](http://build.ros.org/buildStatus/icon?job=Ibin_uT64__fetch_gazebo__ubuntu_trusty_amd64__binary)](http://build.ros.org/view/Ibin_uT64/job/Ibin_uT64__fetch_gazebo__ubuntu_trusty_amd64__binary/)
+The code for this is located at fetch_waiter/scripts/visual.py
+
+Task 2:
+Given location of object, use precomputed vectors file to find best position for robot to go to
+and grasp the object the fastest, then move around the table in order to deliver to the customer.
+
+The code for this is located at fetch_waiter/scripts/waiter.py
+
+
+Made a custom table model in fetch_gazebo/models/table
+
