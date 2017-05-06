@@ -480,7 +480,7 @@ if __name__ == "__main__":
         grasping_client.updateScene()
         cube, grasps = grasping_client.getGraspableCube()
 
-        if (cube == None) & (perception_attempt < 3):
+        if (cube == None) & (perception_attempt < 2):
             rospy.logwarn("Perception failed.")
             perception_attempt += 1
             continue
@@ -494,6 +494,17 @@ if __name__ == "__main__":
             curr = (3.1, 3, 0.0)
             head_action.look_at(3.7, 3, 0.0, "map")
             continue
+        elif (cube == None) & (pos < 2):
+            pos += 1
+            rospy.loginfo("moving to next position")
+            perception_attept = 0
+            #move_base.goto(2.75, 3, 0.0)
+            rospy.loginfo("move forwrad")
+            move_base.goto(3.1, 2, 0.0)
+            curr = (3.1, 2, 0.0)
+            head_action.look_at(3.7, 2, 0.0, "map")
+            continue
+
 
         # Pick the block
         #start_time = timeit.default_timer()
