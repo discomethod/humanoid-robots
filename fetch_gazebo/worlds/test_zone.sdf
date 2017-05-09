@@ -16,8 +16,19 @@
       <pose>4.05 3 0 0 0 1.57</pose>
     </include>
     <include>
-      <uri>model://cafe_table</uri>
+      <uri>model://table</uri>
       <name>table2</name>
+      <pose>2 0 0 0 0 1.57</pose>
+    </include>
+    <include>
+      <uri>model://cafe_table</uri>
+      <name>table3</name>
+      <pose>2 3.2 0 0 0 1.57</pose>
+    </include>
+ 
+    <include>
+      <uri>model://cafe_table</uri>
+      <name>caf</name>
       <pose>-3 5 0 0 0 1.57</pose>
     </include>
     <include>
