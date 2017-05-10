@@ -13,7 +13,7 @@
     <include>
       <uri>model://table</uri>
       <name>table1</name>
-      <pose>5.05 3 0 0 0 1.57</pose>
+      <pose>5.05 6 0 0 0 1.57</pose>
     </include>
     <include>
       <uri>model://table</uri>
@@ -21,13 +21,23 @@
       <pose>2 0 0 0 0 1.57</pose>
     </include>
     <include>
-      <uri>model://cafe_table</uri>
+      <uri>model://table</uri>
       <name>table3</name>
-      <pose>2.5 3.2 0 0 0 1.57</pose>
+      <pose>5 2 0 0 0 0</pose>
+    </include>
+    <include>
+      <uri>model://cafe_table</uri>
+      <name>table4</name>
+      <pose>2.5 2.5 0 0 0 1.57</pose>
+    </include>
+    <include>
+      <uri>model://cafe_table</uri>
+      <name>table4</name>
+      <pose>2 5 0 0 0 1.57</pose>
     </include>
     <include>
       <uri>model://demo_cube</uri>
-      <pose>4.8 3.15 0.83 0 0 0</pose>
+      <pose>4.8 6.15 0.83 0 0 0</pose>
     </include>
   </world>
 </sdf>

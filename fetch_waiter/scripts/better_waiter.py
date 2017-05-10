@@ -378,10 +378,12 @@ if __name__ == "__main__":
     grasping_client = GraspingClient()
 
     tables = []
-    table = Table(5.05, 3, 0.913, 2)
+    table = Table(5.05, 6, 0.913, 2)
     tables.append(table)
-    tables.append(Table(2.5, 3.2, 0.913, 0.913))
+    tables.append(Table(2.5, 2.5, 0.913, 0.913))
+    tables.append(Table(2, 5, 0.913, 0.913))
     tables.append(Table(2, 0, 0.913, 2))
+    tables.append(Table(5, 2, 2, 0.913))
 
     cube_loc = (4.8, 3.15)
     dropoff_goal = (1,0,0)
