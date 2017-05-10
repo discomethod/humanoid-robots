@@ -328,7 +328,6 @@ def intersects(i, j, boundaries, verts, hulls):
     return False
 
 def draw_map(start, goal, dims, obs):
-    #draw_robot(start)
     #setup(width=dims[0]*3, height=dims[1]*2, startx=0, starty=0)
     #screensize(dims[0], dims[1])
     #full_dims = [(0,0), (dims[0], 0), (dims[0], dims[1]), (0, dims[1])]
@@ -338,6 +337,10 @@ def draw_map(start, goal, dims, obs):
     draw_x_y(goal)
     for ob in obs:
         draw_obs(ob.corners)
+    color('blue')
+    for ob in obs:
+        draw_obs(ob.grown_corners)
+
 def draw_obs(verts):
     setposition(verts[0][0]*DRAW_SCALE, verts[0][1]*DRAW_SCALE)
     pendown()
