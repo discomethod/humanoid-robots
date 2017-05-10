@@ -28,7 +28,7 @@
     <include>
       <uri>model://cafe_table</uri>
       <name>table4</name>
-      <pose>2.5 2.5 0 0 0 1.57</pose>
+      <pose>2.1 2.5 0 0 0 1.57</pose>
     </include>
     <include>
       <uri>model://cafe_table</uri>

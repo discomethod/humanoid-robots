@@ -193,7 +193,7 @@ class WaiterClient():
         final_path_indices = dijkstra(len(verts), adjacency, weights, verts.index(start), verts.index(goal))
         draw_path(final_path_indices, verts)
         final_path = []
-        for index in final_path_indices:
+        for index in final_path_indices[1:]:
             final_path.append(verts[index])
         return final_path
 
@@ -401,13 +401,13 @@ if __name__ == "__main__":
     tables = []
     table = Table(5.05, 6, 0.913, 2)
     tables.append(table)
-    tables.append(Table(2.5, 2.5, 0.913, 0.913))
+    tables.append(Table(2.1, 2.5, 0.913, 0.913))
     tables.append(Table(2, 5, 0.913, 0.913))
     tables.append(Table(2, 0, 0.913, 2))
     tables.append(Table(5, 2, 2, 0.913))
 
     cube_loc = (4.8, 6.15)
-    dropoff_goal = (0.8,0,0)
+    dropoff_goal = (3.15,0,3.14)
     start = (0,0)
 
     waiter_client = WaiterClient(move_base, table, tables, start, "vectors.txt")
