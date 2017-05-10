@@ -14,5 +14,13 @@ and grasp the object the fastest, then move around the table in order to deliver
 The code for this is located at fetch_waiter/scripts/waiter.py
 
 
+Task 3:
+Given location of object, use precomputed vectors file to find best position for robot to go to
+and grasp the object the fastest, then use Dijkstra's algorithm on a visibility graph of grown
+obstacles in order to navigate a cluttered environment to get to the pickup location, as well as
+to get to the delivery location.
+
+The code for this is located at fetch_waiter/scripts/better_waiter.py
+
 Made a custom table model in fetch_gazebo/models/table
 
