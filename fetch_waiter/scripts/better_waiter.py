@@ -46,14 +46,20 @@ class Table(object):
         x = self.center[0] + grown_width / 2.0
         y = self.center[1] - grown_length / 2.0
         self.grown_corners.append((x, y))
-        self.bottom_right = (x, y)
         x = self.center[0] - grown_width / 2.0
         y = self.center[1] - grown_length / 2.0
         self.grown_corners.append((x, y))
         x = self.center[0] - grown_width / 2.0
         y = self.center[1] + grown_length / 2.0
         self.grown_corners.append((x, y))
-        self.top_left = (x, y)
+
+        self.top_left = self.grown_corners[3]
+        self.bottom_right = self.grown_corners[1]
+
+        self.left_grown_edge = (self.grown_corners[3], self.grown_corners[2])
+        self.right_grown_edge = (self.grown_corners[0], self.grown_corners[1])
+        self.bot_grown_edge = (self.grown_corners[1], self.grown_corners[2])
+        self.top_grown_edge = (self.grown_corners[0], self.grown_corners[3])
 
 # handle precomputed grasp vectors
 class WaiterClient():
@@ -62,8 +68,7 @@ class WaiterClient():
 
         self.move_base = move_base
         self.position = start_point
-        self.top_left = np.array([table.top_left[0], table.top_left[1]])
-        self.bottom_right = np.array([table.bottom_right[0], table.bottom_right[1]])
+        self.table = table
         self.obstacles = obstacles
 
         self.distance_vectors = list()
@@ -83,29 +88,11 @@ class WaiterClient():
             rospy.logwarn("Distance vector file not found, aborting.")
             exit()
 
-    def get_regime(self, x, y):
-        # calculate which regime the coordinates (x,y) are in
-        # assumes the coordinates are in a valid regime
-        """
-                  1
-            -------------
-            |           |
-          0 |           | 2
-            |           |
-            -------------
-                  3  
-        """
-        if x < self.top_left[0]:
-            return 0
-        if y > self.top_left[1]:
-            return 1
-        if x < self.bottom_right[0]:
-            return 2
-        return 3
-
-    def in_table(self, x, y):
+    def in_table(self, point):
+        x = point[0]
+        y = point[1]
         # returns True if the coordinates are inside the table
-        if x > self.bottom_right[0] or x < self.top_left[0] or y > self.top_left[1] or y < self.bottom_right[1]:
+        if x >= self.table.bottom_right[0] or x <= self.table.top_left[0] or y >= self.table.top_left[1] or y <= self.table.bottom_right[1]:
             return False
         return True
 
@@ -113,34 +100,67 @@ class WaiterClient():
         candidates = self.calculate_candidates(robotx, roboty, blockx, blocky)
         best_cost = None
         best_candidate = None
+        if len(candidates) == 0:
+            rospy.logwarn("Object is too far into the table to be grasped, aborting.")
+            exit()
         for candidate_tuple in candidates:
             if best_cost is None or candidate_tuple[1] < best_cost:
                 best_candidate = candidate_tuple[0]
                 best_cost = candidate_tuple[1]
         return (best_candidate[0], best_candidate[1], 0.0)
 
+    def _find_vector_intersect(self, point, slope, regime):
+        if regime == 0:
+            edge = self.table.left_grown_edge
+        elif regime == 1:
+            edge = self.table.top_grown_edge
+        elif regime == 2:
+            edge = self.table.right_grown_edge
+        elif regime == 3:
+            edge = self.table.bot_grown_edge
+
+        corner1 = edge[0]
+        corner2 = edge[1]
+
+        if regime == 0 or regime == 2:
+            x = corner1[0]
+            y = slope * (x - point[0]) + point[1]
+        elif regime == 1 or regime == 3:
+            y = corner1[1]
+            x = (y - point[1])/slope + point[0]
+        return (x,y)
+
     def calculate_candidates(self, robotx, roboty, blockx, blocky):
+        # These are the table 'regimes'
+        """
+                  1
+            -------------
+            |           |
+          0 |           | 2
+            |           |
+            -------------
+                  3
+        """
+
         candidates = list() # tuple of (coord, cost)
+
         for index in range(len(self.distance_vectors)):
             distance_vector = self.distance_vectors[index]
             perp = distance_vector[0]
             trans = distance_vector[1]
-            if robotx < self.top_left[0]:
-                # regime 0
-                if not self.in_table(blockx-perp, blocky+trans):
-                    candidates.append((np.array([blockx-perp,blocky+trans]),self.distance_costs[index]))
-            elif roboty > self.top_left[1]:
-                # regime 1
-                if not self.in_table(blockx+trans, blocky-perp):
-                    candidates.append((np.array([blockx+trans,blocky-perp]),self.distance_costs[index]))
-            elif robotx < self.bottom_right[0]:
-                # regime 2
-                if not self.in_table(blockx+perp, blocky-trans):
-                    candidates.append((np.array([blockx+perp,blocky-trans]),self.distance_costs[index]))
-            else:
-                # regime 3
-                if not self.in_table(blockx-trans, blocky+perp):
-                    candidates.append((np.array([blockx-trans,blocky+perp]),self.distance_costs[index]))
+            #regime = self.get_regime(robotx, roboty)
+
+            regimes = [0, 1, 2, 3]
+            for regime in regimes:
+                if regime == 0 or regime == 2:
+                    candidate = self._find_vector_intersect((blockx, blocky), -1.0*(trans/perp), regime)
+                    if not self.in_table(candidate):
+                        candidates.append((candidate, self.distance_costs[index]))
+                elif regime == 1 or regime == 3:
+                    candidate = self._find_vector_intersect((blockx, blocky), -1.0*(perp/trans), regime)
+                    if not self.in_table(candidate):
+                        candidates.append((candidate, self.distance_costs[index]))
+
         return candidates
 
     def delivery_route(self, start, goal):
@@ -328,10 +348,8 @@ def intersects(i, j, boundaries, verts, hulls):
     return False
 
 def draw_map(start, goal, dims, obs):
-    #setup(width=dims[0]*3, height=dims[1]*2, startx=0, starty=0)
-    #screensize(dims[0], dims[1])
-    #full_dims = [(0,0), (dims[0], 0), (dims[0], dims[1]), (0, dims[1])]
-    #draw_obs(full_dims)
+    setup(width=dims[0]*3*DRAW_SCALE, height=dims[1]*2*DRAW_SCALE, startx=0, starty=0)
+    tracer(0,0) # so turtle graphics doesn't update the screen after every call
     hideturtle()
     draw_x_y(start)
     draw_x_y(goal)
@@ -340,6 +358,7 @@ def draw_map(start, goal, dims, obs):
     color('blue')
     for ob in obs:
         draw_obs(ob.grown_corners)
+    update()
 
 def draw_obs(verts):
     setposition(verts[0][0]*DRAW_SCALE, verts[0][1]*DRAW_SCALE)
@@ -355,6 +374,7 @@ def draw_x_y(tup):
     dot(5, 'blue')
 
 def draw_path(path, vertices):
+    tracer(0,0) # so turtle graphics doesn't update the screen after every call
     color('green')
     first_vert = vertices[path[0]]
     setposition(first_vert[0]*DRAW_SCALE, first_vert[1]*DRAW_SCALE)
@@ -362,6 +382,7 @@ def draw_path(path, vertices):
     for i in range(len(path)):
         v = vertices[path[i]]
         goto(v[0]*DRAW_SCALE, v[1]*DRAW_SCALE)
+    update()
 
 if __name__ == "__main__":
     # Create a node
@@ -385,8 +406,8 @@ if __name__ == "__main__":
     tables.append(Table(2, 0, 0.913, 2))
     tables.append(Table(5, 2, 2, 0.913))
 
-    cube_loc = (4.8, 3.15)
-    dropoff_goal = (1,0,0)
+    cube_loc = (4.8, 6.15)
+    dropoff_goal = (0.8,0,0)
     start = (0,0)
 
     waiter_client = WaiterClient(move_base, table, tables, start, "vectors.txt")
@@ -398,6 +419,7 @@ if __name__ == "__main__":
     rospy.loginfo("Raising torso...")
     torso_action.move_to([0.4, ])
 
+    rospy.loginfo("Looking at object...")
     # Point the head at the cube we want to pick
     head_action.look_at(cube_loc[0], cube_loc[1], 0.0, "map")
 
@@ -418,6 +440,7 @@ if __name__ == "__main__":
     grasping_client.tuck()
 
     rospy.loginfo("Navigating to dropoff location...")
+    reset() # reset turtle graphics screen
     waiter_client.goto(dropoff_goal)
     # Place the block
     while not rospy.is_shutdown():
